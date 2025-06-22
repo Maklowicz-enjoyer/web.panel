@@ -134,9 +134,23 @@ function verifyCredentials($email, $password) {
             return false;
         }
         
-        // Verify password using PHP's secure function
-        if (password_verify($password, $user['password'])) {
-            // Password correct! Return user info
+        // Check if password is hashed or plain text
+        $isHashed = (strlen($user['password']) >= 60 && 
+                    (substr($user['password'], 0, 4) === '$2y$' || 
+                     substr($user['password'], 0, 4) === '$2a$'));
+        
+        $passwordMatch = false;
+        
+        if ($isHashed) {
+            // For hashed passwords, use password_verify
+            $passwordMatch = password_verify($password, $user['password']);
+        } else {
+            // For plain text passwords - direct comparison
+            $passwordMatch = (trim($password) == trim($user['password']));
+        }
+        
+        if ($passwordMatch) {
+            // Password correct! Return user info (without password for security)
             return [
                 'id' => $user['id'],
                 'email' => $user['email'],

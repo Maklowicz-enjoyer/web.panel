@@ -18,7 +18,7 @@ $success = '';
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $password = trim($_POST['password'] ?? '');
     
     // Basic validation (like checking if someone filled out the form)
     if (empty($email) || empty($password)) {

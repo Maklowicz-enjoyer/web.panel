@@ -35,7 +35,7 @@ function loadEnv($filePath) {
 
 try {
     // Load environment variables (like opening the recipe book)
-    loadEnv(__DIR__ . '/../.env');
+    loadEnv(__DIR__ . '/.env');
 } catch (Exception $e) {
     // If .env file doesn't exist, use default values
     error_log("Warning: " . $e->getMessage());
