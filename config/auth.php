@@ -146,7 +146,7 @@ function verifyCredentials($email, $password) {
             $passwordMatch = password_verify($password, $user['password']);
         } else {
             // For plain text passwords - direct comparison
-            $passwordMatch = (trim($password) == trim($user['password']));
+            $passwordMatch = (trim($password) == $user['password']);
         }
         
         if ($passwordMatch) {
