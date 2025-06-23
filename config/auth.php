@@ -24,15 +24,15 @@ function isLoggedIn() {
  */
 function requireLogin($redirectTo = 'index.php') {
     if (!isLoggedIn()) {
-        // No valid session? Go back to login!
+       // No valid session? Go back to login!
         header("Location: $redirectTo");
         exit;
     }
     
     // Also check if session is still valid in database
     if (!isSessionValid()) {
-        logoutUser();
-        header("Location: $redirectTo");
+        logoutUser('session_expired');
+        header("Location: $redirectTo?message=session_expired");
         exit;
     }
 }
@@ -108,6 +108,10 @@ function logoutUser() {
     // Destroy PHP session (throw away the ID card)
     session_unset();
     session_destroy();
+
+        // Start new session for flash message
+    session_start();
+    $_SESSION['logout_message'] = $message;
 }
 
 /**
@@ -146,7 +150,7 @@ function verifyCredentials($email, $password) {
             $passwordMatch = password_verify($password, $user['password']);
         } else {
             // For plain text passwords - direct comparison
-            $passwordMatch = (trim($password) == $user['password']);
+            $passwordMatch = (trim($password) == trim($user['password']));
         }
         
         if ($passwordMatch) {
@@ -244,9 +248,30 @@ function requireRole($requiredRole, $redirectTo = 'index.php') {
     requireLogin($redirectTo);
     
     if (!hasRole($requiredRole)) {
-        header("Location: unauthorized.php");
+         header("Location: $redirectTo?message=unauthorized");
         exit;
     }
+}
+
+/**
+ * Auto-logout user after inactivity
+ */
+function checkInactivityTimeout($timeoutMinutes = 30) {
+    if (!isLoggedIn()) {
+        return;
+    }
+    
+    $lastActivity = $_SESSION['last_activity'] ?? time();
+    $timeout = $timeoutMinutes * 60;
+    
+    if (time() - $lastActivity > $timeout) {
+        logoutUser('session_expired');
+        header("Location: index.php?message=session_expired");
+        exit;
+    }
+    
+    // Update last activity
+    $_SESSION['last_activity'] = time();
 }
 
 /**
@@ -294,5 +319,17 @@ function cleanupExpiredSessions() {
     } catch (Exception $e) {
         error_log("Session cleanup error: " . $e->getMessage());
     }
+}
+
+/**
+ * Get and clear logout message
+ */
+function getLogoutMessage() {
+    if (isset($_SESSION['logout_message'])) {
+        $message = $_SESSION['logout_message'];
+        unset($_SESSION['logout_message']);
+        return $message;
+    }
+    return null;
 }
 ?>
